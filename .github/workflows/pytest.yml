@@ -42,14 +42,21 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - name: Install with [jax] extra
+      - name: Install with [jax] extra in an isolated venv
+        # The [jax] extra transitively pulls tfp-nightly (via gymnax →
+        # rlax → distrax → tensorflow-probability), which races numpy 2.x
+        # init in setup-python's shared site-packages and triggers
+        # `ImportError: cannot load module more than once per process` at
+        # conftest load. Putting everything in a fresh venv eliminates
+        # the multi-load condition.
         run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[jax]"
-          pip install pytest pytest-cov pytest-mock
+          python -m venv .venv-jax
+          .venv-jax/bin/pip install --upgrade pip
+          .venv-jax/bin/pip install -e ".[jax]"
+          .venv-jax/bin/pip install pytest pytest-cov pytest-mock
       - name: Run JAX tests
         run: |
-          python -m pytest -v test/jax \
+          .venv-jax/bin/python -m pytest -v test/jax \
             --cov=hydrogym.jax --cov-report=term-missing \
             -m "requires_jax"
 

@@ -84,15 +84,13 @@ def test_step_reward_single_substep_sign_and_dt_scaling(base_env_config):
 @pytest.mark.parametrize(
     "aggregation, expected_reward",
     [
-        ("mean", -0.2),    # mean([1,2,3]) = 2 -> -dt*2 = -0.2
-        ("sum", -0.6),     # sum([1,2,3]) = 6 -> -dt*6 = -0.6
+        ("mean", -0.2),  # mean([1,2,3]) = 2 -> -dt*2 = -0.2
+        ("sum", -0.6),  # sum([1,2,3]) = 6 -> -dt*6 = -0.6
         ("median", -0.2),  # median([1,2,3]) = 2 -> -dt*2 = -0.2
     ],
 )
 def test_step_reward_multi_substep_aggregation(base_env_config, monkeypatch, aggregation, expected_reward):
-    env = FlowEnv(
-        base_env_config(actuation_config={"num_substeps": 3, "reward_aggregation": aggregation})
-    )
+    env = FlowEnv(base_env_config(actuation_config={"num_substeps": 3, "reward_aggregation": aggregation}))
     env.reset()
 
     # Patch solver.solve to inject the canonical [1,2,3] reward vector.

@@ -9,7 +9,6 @@ import pytest
 import hydrogym
 import hydrogym.core as hydrogym_core
 
-
 EXPECTED_ALL = {
     "CallbackBase",
     "FlowEnv",
@@ -97,7 +96,5 @@ def test_lazy_submodules_not_loaded_before_access():
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 0, (
-        f"subprocess failed: stdout={result.stdout!r} stderr={result.stderr!r}"
-    )
+    assert result.returncode == 0, f"subprocess failed: stdout={result.stdout!r} stderr={result.stderr!r}"
     assert result.stdout.strip().endswith("OK")

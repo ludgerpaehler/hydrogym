@@ -62,8 +62,7 @@ def test_import_jax_module_does_not_load_firedrake_or_mpi4py():
     )
     line = result.stdout.strip().splitlines()[-1]
     assert line == "False False False False", (
-        f"hydrogym.jax pulled in a forbidden module: stdout={result.stdout!r} "
-        f"stderr={result.stderr!r}"
+        f"hydrogym.jax pulled in a forbidden module: stdout={result.stdout!r} stderr={result.stderr!r}"
     )
 
 
@@ -198,13 +197,9 @@ def test_get_obs_spectral_channel():
     # actually exists inside our small box.
     Nx, Ny, Nz, n = 8, 8, 4, 4
     try:
-        params = channel.ChannelEnvParams(
-            Nx=Nx, Ny=Ny, Nz=Nz, obs_subsample=n, k_det=1
-        )
+        params = channel.ChannelEnvParams(Nx=Nx, Ny=Ny, Nz=Nz, obs_subsample=n, k_det=1)
     except TypeError:
-        params = channel.ChannelEnvParams(
-            Nx=Nx, Ny=Ny, Nz=Nz, obs_subsample=n, k_det=1, config={}
-        )
+        params = channel.ChannelEnvParams(Nx=Nx, Ny=Ny, Nz=Nz, obs_subsample=n, k_det=1, config={})
 
     # Deterministic field so the output of the gather is predictable.
     U = jnp.arange(Nx * Ny * Nz, dtype=jnp.float32).reshape((Nx, Ny, Nz))
@@ -296,9 +291,7 @@ def test_duplicate_flow_config_classes_match():
         "DEFAULT_GRID_SIZE",
         "DEFAULT_OBS_SIZE",
     ):
-        assert getattr(FlowConfigA, name) == getattr(FlowConfigB, name), (
-            f"DEFAULT_* drift on {name}"
-        )
+        assert getattr(FlowConfigA, name) == getattr(FlowConfigB, name), f"DEFAULT_* drift on {name}"
 
     # DEFAULT_DOMAIN_X / Y are tuples of jnp scalars -- compare value-wise.
     for name in ("DEFAULT_DOMAIN_X", "DEFAULT_DOMAIN_Y"):
@@ -311,17 +304,12 @@ def test_duplicate_flow_config_classes_match():
     # 2. Same public attribute / method set (ignoring dunders other than
     # __init__).
     def public_surface(cls):
-        return {
-            name
-            for name in vars(cls)
-            if not name.startswith("_") or name == "__init__"
-        }
+        return {name for name in vars(cls) if not name.startswith("_") or name == "__init__"}
 
     surface_a = public_surface(FlowConfigA)
     surface_b = public_surface(FlowConfigB)
     assert surface_a == surface_b, (
-        f"FlowConfig surface drift: only-in-A={surface_a - surface_b} "
-        f"only-in-B={surface_b - surface_a}"
+        f"FlowConfig surface drift: only-in-A={surface_a - surface_b} only-in-B={surface_b - surface_a}"
     )
 
     # 3. Construct both and check the headline scalar invariants match.

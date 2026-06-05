@@ -139,9 +139,7 @@ def test_solve_callbacks_close_called_in_order(stub_solver):
     stub_solver.solve(num_steps=2, callbacks=[cb1, cb2])
 
     # Extract just the close() calls and verify cb1.close precedes cb2.close.
-    close_call_names = [
-        name for name, _, _ in parent.mock_calls if name.endswith(".close")
-    ]
+    close_call_names = [name for name, _, _ in parent.mock_calls if name.endswith(".close")]
     assert close_call_names == ["cb1.close", "cb2.close"]
 
 

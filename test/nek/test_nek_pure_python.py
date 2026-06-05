@@ -84,7 +84,6 @@ from hydrogym.nek.env import (  # noqa: E402
 )
 from hydrogym.nek.parallel_env import NekParallelEnv  # noqa: E402
 
-
 # =========================================================================
 # tag_dict integrity
 # =========================================================================

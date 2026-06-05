@@ -143,7 +143,12 @@ line_length = 120
 known_first_party = ["hydrogym"]
 
 [tool.codespell]
-skip = '*.svg,*.ipynb,./docs/package-lock.json'
+skip = '*.svg,*.ipynb,./docs/package-lock.json,./third_party'
+# `aggreation` is an upstream typo in hydrogym/core.py (the deprecated
+# `reward_aggreation_rule` env_config key); a regression test in
+# test/core/test_flowenv.py pins the typo as part of the deprecation
+# contract, so codespell must accept it.
+ignore-words-list = 'aggreation'
 
 [tool.pytest.ini_options]
 markers = [

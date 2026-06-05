@@ -34,7 +34,6 @@ pytest.importorskip("gymnax")
 from hydrogym.jax import env_core as _env_core  # noqa: E402
 from hydrogym.jax.env_core import ConfigError, JAXFlowEnv  # noqa: E402
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -118,9 +117,7 @@ def test_jaxflowenv_missing_config_file_raises(tmp_path, monkeypatch):
             JAXFlowEnv(env_config={"environment_name": "stub"})
 
     msg = str(excinfo.value)
-    assert "configuration file" in msg.lower(), (
-        f"error message should mention configuration file, got: {msg!r}"
-    )
+    assert "configuration file" in msg.lower(), f"error message should mention configuration file, got: {msg!r}"
 
 
 # ---------------------------------------------------------------------------

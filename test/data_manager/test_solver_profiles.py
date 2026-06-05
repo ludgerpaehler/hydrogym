@@ -118,8 +118,7 @@ def test_workspace_files_target_keys_are_subset_of_known_sources(name):
         if (name, source_name) in _WORKSPACE_FILE_KEY_EXCEPTIONS:
             continue
         assert source_name in known_sources, (
-            f"{name}: workspace_files source {source_name!r} not declared in "
-            f"required_files or optional_files"
+            f"{name}: workspace_files source {source_name!r} not declared in required_files or optional_files"
         )
 
 

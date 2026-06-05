@@ -8,7 +8,6 @@ import pytest
 
 from hydrogym.data_manager import SOLVER_PROFILES, HFDataManager
 
-
 # ---------------------------------------------------------------------------
 # Helpers (local to this module by design — no shared conftest fixtures)
 # ---------------------------------------------------------------------------

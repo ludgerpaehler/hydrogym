@@ -73,9 +73,7 @@ def test_mpi_attrs_set_matches_lazy_table():
     all_set = set(maia_mod.__all__)
     eager_set = all_set - lazy_table
 
-    assert lazy_table.issubset(all_set), (
-        f"lazy names not in __all__: {lazy_table - all_set}"
-    )
+    assert lazy_table.issubset(all_set), f"lazy names not in __all__: {lazy_table - all_set}"
     assert eager_set, "expected at least one eager symbol in __all__"
 
     src = inspect.getsource(maia_mod._load_mpi_deps)
@@ -85,9 +83,7 @@ def test_mpi_attrs_set_matches_lazy_table():
         # either a literal setattr(_mod, "<name>", ...) call OR a "<name>"
         # string literal that the loop iterates over.
         pattern = rf'["\']{re.escape(name)}["\']'
-        assert re.search(pattern, src), (
-            f"lazy name {name!r} missing from _load_mpi_deps body"
-        )
+        assert re.search(pattern, src), f"lazy name {name!r} missing from _load_mpi_deps body"
 
 
 def test_unknown_attribute_raises():
