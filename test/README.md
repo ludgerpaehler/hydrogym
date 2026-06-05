@@ -57,3 +57,44 @@ The `*_grad.py` tests are additionally marked `slow` and are skipped by default 
 Defaults (set in `pyproject.toml [tool.pytest.ini_options].addopts`):
 deselects `requires_firedrake`, `requires_maia`, `requires_nek`, `requires_jaxfluids`.
 That means a bare `pytest` from a fresh checkout runs the pure-Python tests + (if installed) the JAX tests.
+
+## Coverage
+
+Coverage is wired in `pyproject.toml` (`[tool.coverage.run]`, `[tool.coverage.report]`, `[tool.coverage.html]`, `[tool.coverage.xml]`). The `firedrake/` and `jaxfluids/` subpackages are excluded — they are not exercised on plain CI.
+
+Two ways to measure locally:
+
+```bash
+pip install coverage  # or: pip install pytest-cov
+
+# Option 1 — pytest-cov plugin (path form ONLY; `--cov=hydrogym.<sub>`
+# triggers a numpy 2.x "cannot load module more than once" error via
+# coverage.py's pre-import of the named submodule):
+python -m pytest --cov=hydrogym --cov-report=term-missing test/
+
+# Option 2 — coverage.py directly (recommended; avoids the pre-import trap):
+coverage run -m pytest test/
+coverage report                    # text summary
+coverage html && open htmlcov/index.html
+coverage xml                       # for tooling that consumes XML
+```
+
+Combining coverage from multiple subset runs (the CI pattern):
+
+```bash
+coverage erase
+coverage run -m pytest test/test_public_api_surface.py test/core test/data_manager test/lazy_import
+coverage run -m pytest test/jax    -m requires_jax
+coverage run -m pytest test/maia test/nek -m "requires_maia or requires_nek"
+coverage combine                   # merges the .coverage.<host>.<pid>.<seq> files
+coverage report
+coverage html
+```
+
+In CI, `.github/workflows/pytest.yml` runs each subset under `coverage run -m pytest`, uploads the per-process `.coverage.*` files as artifacts, and a final `coverage` job downloads everything, runs `coverage combine`, and publishes:
+
+- the text summary to the GitHub Actions step summary
+- `coverage-html` artifact (extract + open `htmlcov/index.html`)
+- `coverage-xml` artifact (`coverage.xml`, suitable for Codecov / SonarQube)
+
+No fail-under threshold is set yet — we're establishing a baseline before gating on a number. To gate, add `fail_under = N` to `[tool.coverage.report]` in `pyproject.toml`.

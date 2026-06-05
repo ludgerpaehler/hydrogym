@@ -12,6 +12,14 @@ concurrency:
   group: pytest-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Each pytest job runs under `coverage run -m pytest` (NOT pytest-cov's
+# --cov= flag) so coverage.py controls the process from startup, avoiding
+# pytest-cov's late-binding module pre-import that races numpy 2.x init
+# in the conftest. With `[tool.coverage.run] parallel = true` (set in
+# pyproject.toml) each job writes its own .coverage.<host>.<pid>.<seq>
+# file; the `coverage` job at the bottom downloads all three and merges
+# them with `coverage combine`, then publishes an HTML + XML report as
+# an artifact.
 jobs:
   pytest-core:
     name: pure-python (core + data_manager + lazy-import + public-api)
@@ -26,15 +34,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .
-          pip install pytest pytest-cov pytest-mock
-      - name: Run pure-Python tests
-        # No --cov here: coverage.py pre-imports the measured package, which
-        # races numpy 2.x init against conftest's own `import numpy` and
-        # triggers "cannot load module more than once per process". Coverage
-        # is nice-to-have, not required for regression detection.
+          pip install pytest pytest-mock coverage
+      - name: Run pure-Python tests under coverage
         run: |
-          python -m pytest -v test/test_public_api_surface.py test/core test/data_manager test/lazy_import \
+          coverage run -m pytest -v test/test_public_api_surface.py test/core test/data_manager test/lazy_import \
             -m "not requires_firedrake and not requires_maia and not requires_nek and not requires_jaxfluids and not requires_jax"
+      - name: Upload coverage data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-pure-python
+          path: .coverage.*
+          include-hidden-files: true
+          if-no-files-found: warn
 
   pytest-jax:
     name: jax backend (pip-installable on plain ubuntu-latest)
@@ -56,13 +68,19 @@ jobs:
           python -m venv .venv-jax
           .venv-jax/bin/pip install --upgrade pip
           .venv-jax/bin/pip install -e ".[jax]"
-          .venv-jax/bin/pip install pytest pytest-cov pytest-mock
-      - name: Run JAX tests
-        # See note in pytest-core job: --cov dropped because coverage.py's
-        # pre-import of the measured package races numpy 2.x init.
+          .venv-jax/bin/pip install pytest pytest-mock coverage
+      - name: Run JAX tests under coverage
         run: |
-          .venv-jax/bin/python -m pytest -v test/jax \
+          .venv-jax/bin/coverage run -m pytest -v test/jax \
             -m "requires_jax"
+      - name: Upload coverage data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-jax
+          path: .coverage.*
+          include-hidden-files: true
+          if-no-files-found: warn
 
   pytest-mpi-pure-python:
     name: maia + nek pure-python surface (no mpirun, no native binary)
@@ -85,8 +103,62 @@ jobs:
           # stable-baselines3, supersuit, tensorboard) that the wrappers
           # import eagerly. mpi4py is built against the apt-installed OpenMPI.
           pip install -e ".[maia,nek]"
-          pip install pytest pytest-cov pytest-mock
-      - name: Run MAIA/NEK pure-Python tests (no mpirun)
+          pip install pytest pytest-mock coverage
+      - name: Run MAIA/NEK pure-Python tests under coverage (no mpirun)
         run: |
-          python -m pytest -v test/maia test/nek \
+          coverage run -m pytest -v test/maia test/nek \
             -m "requires_maia or requires_nek"
+      - name: Upload coverage data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-mpi-pure-python
+          path: .coverage.*
+          include-hidden-files: true
+          if-no-files-found: warn
+
+  coverage:
+    name: combined coverage report
+    needs: [pytest-core, pytest-jax, pytest-mpi-pure-python]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install base + coverage
+        # We need hydrogym importable so `coverage report` can resolve the
+        # paths from the merged .coverage data back to source files.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install coverage
+      - name: Download per-job coverage data
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          merge-multiple: true
+      - name: Combine + report
+        run: |
+          ls -la .coverage.* 2>/dev/null || echo "no .coverage.* files received"
+          coverage combine
+          echo "## Coverage summary" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          coverage report --skip-empty | tee -a $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          coverage html
+          coverage xml
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: htmlcov/
+          if-no-files-found: error
+      - name: Upload XML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          if-no-files-found: error

@@ -162,6 +162,61 @@ markers = [
 addopts = "-m 'not requires_firedrake and not requires_maia and not requires_nek and not requires_jaxfluids'"
 testpaths = ["test"]
 
+# ---------------------------------------------------------------------------
+# Coverage configuration
+#
+# Read by `pytest --cov=hydrogym` and `coverage run -m pytest`.
+#
+# A note on the import-side-effect trap: pytest-cov's `--cov=<dotted.module>`
+# form pre-imports the named module to find its __file__. With hydrogym/jax
+# that pulls in numpy via jaxfluids/jax transitive deps, racing numpy 2.x's
+# own init against the conftest's `import numpy as np` and triggering
+# `ImportError: cannot load module more than once per process`. Two paths
+# work cleanly:
+#   - pytest --cov=hydrogym      (path form, no submodule pre-import)
+#   - coverage run -m pytest ...  (bypasses the pytest-cov plugin entirely)
+# The CI workflow uses the second form; users can use either locally.
+# See .github/workflows/pytest.yml::coverage for the combined-report job.
+# ---------------------------------------------------------------------------
+
+[tool.coverage.run]
+source = ["hydrogym"]
+branch = true
+# Each test job in CI emits a per-process .coverage.<host>.<pid>.<seq>
+# file. The `coverage combine` step in the aggregator job merges them.
+parallel = true
+omit = [
+  "hydrogym/firedrake/*",      # Docker-only; not exercised in CI
+  "hydrogym/jaxfluids/*",      # jaxfluids stack not in CI
+  "test/*",                    # don't measure the tests themselves
+  "**/conftest.py",
+]
+
+[tool.coverage.report]
+# Lines matching any of these are not counted toward coverage. Mirror the
+# common pytest/coverage idioms plus a few project-specific ones.
+exclude_also = [
+  "pragma: no cover",
+  "raise NotImplementedError",
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+  "@(abc\\.)?abstractmethod",
+  "def __repr__",
+  "\\.\\.\\.$",
+]
+show_missing = true
+precision = 1
+skip_covered = false
+# No fail_under threshold yet — we're establishing a baseline. Set this
+# (e.g. fail_under = 70) once the team agrees what the floor should be.
+
+[tool.coverage.html]
+directory = "htmlcov"
+title = "HydroGym test coverage"
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
