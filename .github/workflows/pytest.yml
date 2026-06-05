@@ -1,0 +1,77 @@
+name: pytest
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pytest-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest-core:
+    name: pure-python (core + data_manager + lazy-import + public-api)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install base + dev
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest pytest-cov pytest-mock
+      - name: Run pure-Python tests
+        run: |
+          python -m pytest -v test/test_public_api_surface.py test/core test/data_manager test/lazy_import \
+            --cov=hydrogym --cov-report=term-missing \
+            -m "not requires_firedrake and not requires_maia and not requires_nek and not requires_jaxfluids and not requires_jax"
+
+  pytest-jax:
+    name: jax backend (pip-installable on plain ubuntu-latest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install with [jax] extra
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[jax]"
+          pip install pytest pytest-cov pytest-mock
+      - name: Run JAX tests
+        run: |
+          python -m pytest -v test/jax \
+            --cov=hydrogym.jax --cov-report=term-missing \
+            -m "requires_jax"
+
+  pytest-mpi-pure-python:
+    name: maia + nek pure-python surface (no mpirun, no native binary)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install system MPI for mpi4py
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libopenmpi-dev openmpi-bin
+      - name: Install base + mpi4py + needed pure-python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install mpi4py pytest pytest-cov pytest-mock omegaconf toml pymech
+      - name: Run MAIA/NEK pure-Python tests (no mpirun)
+        run: |
+          python -m pytest -v test/maia test/nek \
+            -m "requires_maia or requires_nek"
