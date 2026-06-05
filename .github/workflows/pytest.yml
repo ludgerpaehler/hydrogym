@@ -28,9 +28,12 @@ jobs:
           pip install -e .
           pip install pytest pytest-cov pytest-mock
       - name: Run pure-Python tests
+        # No --cov here: coverage.py pre-imports the measured package, which
+        # races numpy 2.x init against conftest's own `import numpy` and
+        # triggers "cannot load module more than once per process". Coverage
+        # is nice-to-have, not required for regression detection.
         run: |
           python -m pytest -v test/test_public_api_surface.py test/core test/data_manager test/lazy_import \
-            --cov=hydrogym --cov-report=term-missing \
             -m "not requires_firedrake and not requires_maia and not requires_nek and not requires_jaxfluids and not requires_jax"
 
   pytest-jax:
@@ -55,9 +58,10 @@ jobs:
           .venv-jax/bin/pip install -e ".[jax]"
           .venv-jax/bin/pip install pytest pytest-cov pytest-mock
       - name: Run JAX tests
+        # See note in pytest-core job: --cov dropped because coverage.py's
+        # pre-import of the measured package races numpy 2.x init.
         run: |
           .venv-jax/bin/python -m pytest -v test/jax \
-            --cov=hydrogym.jax --cov-report=term-missing \
             -m "requires_jax"
 
   pytest-mpi-pure-python:
