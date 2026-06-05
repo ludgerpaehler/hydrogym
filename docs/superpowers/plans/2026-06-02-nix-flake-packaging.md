@@ -377,7 +377,7 @@ Worked example (replace with real values):
 # NVHPC SDK 26.1 (containing CUDA 12.9, NCCL, math libs, nvcc, nvfortran,
 # nvc/nvc++) as a fixed-output derivation. This is the largest input to
 # any GPU flake output — multi-GB in the store. Build it once per host
-# and re-use via the Nix binary cache.
+# and reuse via the Nix binary cache.
 
 { stdenv, fetchurl, lib, autoPatchelfHook, zlib, glibc, libGL }:
 
