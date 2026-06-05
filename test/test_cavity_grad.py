@@ -4,6 +4,8 @@ from ufl import sin
 
 import hydrogym.firedrake as hgym
 
+pytestmark = [pytest.mark.requires_firedrake, pytest.mark.slow]
+
 
 def test_grad():
     flow = hgym.Cavity(Re=50, mesh="medium")

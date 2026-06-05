@@ -1,3 +1,8 @@
+import pytest
+
+pytestmark = [pytest.mark.requires_firedrake, pytest.mark.slow]
+
+
 def isordered(arr):
     if len(arr) < 2:
         return True

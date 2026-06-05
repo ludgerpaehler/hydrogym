@@ -109,6 +109,8 @@ toml = "^0.10.2"
 tomli = "^2.0.1"
 codespell = "^2.2.6"
 pytest = "^8.1.1"
+pytest-cov = "^5.0.0"
+pytest-mock = "^3.14.0"
 psutil = "^7.0.2"
 
 [tool.poetry.group.interactive.dependencies]
@@ -142,6 +144,18 @@ known_first_party = ["hydrogym"]
 
 [tool.codespell]
 skip = '*.svg,*.ipynb,./docs/package-lock.json'
+
+[tool.pytest.ini_options]
+markers = [
+  "requires_firedrake: needs the Firedrake docker image",
+  "requires_maia: needs the maia native binary + MPMD mpirun",
+  "requires_nek: needs the nek5000 native binary + MPMD mpirun",
+  "requires_jaxfluids: needs the jaxfluids dependency stack",
+  "requires_jax: needs the [jax] extra installed",
+  "slow: long-running test (gradient / training)",
+]
+addopts = "-m 'not requires_firedrake and not requires_maia and not requires_nek and not requires_jaxfluids'"
+testpaths = ["test"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
