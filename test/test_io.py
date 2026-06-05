@@ -1,6 +1,10 @@
 import os
 
+import pytest
+
 import hydrogym.firedrake as hgym
+
+pytestmark = pytest.mark.requires_firedrake
 
 
 def test_checkpointing(tmp_dir="tmp"):

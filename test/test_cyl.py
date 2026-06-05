@@ -5,6 +5,8 @@ import pytest
 import hydrogym.firedrake as hgym
 from hydrogym.firedrake.utils.pd import PDController
 
+pytestmark = pytest.mark.requires_firedrake
+
 
 def test_import_medium():
     hgym.Cylinder(mesh="medium")

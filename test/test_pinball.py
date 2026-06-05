@@ -1,6 +1,9 @@
 import numpy as np
+import pytest
 
 import hydrogym.firedrake as hgym
+
+pytestmark = pytest.mark.requires_firedrake
 
 
 def test_import_fine():

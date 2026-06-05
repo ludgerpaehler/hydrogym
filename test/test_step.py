@@ -1,6 +1,9 @@
+import pytest
 from ufl import sin
 
 import hydrogym.firedrake as hgym
+
+pytestmark = pytest.mark.requires_firedrake
 
 
 def test_import_medium():

@@ -1,8 +1,11 @@
 import firedrake_adjoint as fda
 import numpy as np
 import pyadjoint
+import pytest
 
 import hydrogym.firedrake as hgym
+
+pytestmark = [pytest.mark.requires_firedrake, pytest.mark.slow]
 
 
 def test_steady_grad():
